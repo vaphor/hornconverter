@@ -11,3 +11,6 @@ the output still contains usage of the array theory.
 Usage : ./java2horn [options] file
 
 Example : ./java2horn demo.java -o demo.smt2
+
+Use your favorite SMT solver to solve the smt2 file
+or use vaphor to abstract it into a smt2 without arrays.
