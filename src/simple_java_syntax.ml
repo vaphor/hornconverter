@@ -161,6 +161,7 @@ let rec sexpr2string se = match se with
   | Se_arraysize(tab) -> Printf.sprintf "%s.size()" (sexpr2string (fst tab))
   | Se_random -> Printf.sprintf "Support.random()"
   | Se_random_bounded(low, high) -> Printf.sprintf "Support.random(%s, %s)" (sexpr2string (fst low)) (sexpr2string (fst high))
+  | _ -> failwith "unhandled operation"
 
 (* Avar = s_var * option (s_expr_e) where the option is the initialization*)			 
 let pp_var_decl avar =

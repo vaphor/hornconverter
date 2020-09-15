@@ -71,6 +71,7 @@ let rec tr_type = function
   | Iterator_type -> St_int
   | List_type(t) -> St_array(tr_type t)
   | Class_type(Simple_class_type(Simple_name(str, _))) -> non_supported (Printf.sprintf "type class %s" str)
+  | _ -> failwith "unknown type"
 
 (*Creates a variable from a java variable*)
 let tr_variable (v: variable) =
@@ -220,7 +221,7 @@ let assigns = get_array_inits t init var.s_var_extent in
                                                                                                  {extent_beg=var.s_var_extent.extent_beg;
                                                                                                   extent_end=var.s_var_extent.extent_end;
                                                                                                   extent_unique_id = var.s_var_extent.extent_unique_id +i;} ) assigns*)
-  | (Tuple_init(l), St_array(t)) -> failwith "Only map with tuple access allowed"
+  (*| (Tuple_init(l), St_array(t)) -> failwith "Only map with tuple access allowed"*)
   | (Tuple_init(l), _) -> failwith "Trying to initialize a non map variable with an array"
 
 

@@ -43,7 +43,7 @@ java2horn: $(CMX_FILES) $(AUTOGEN)
 depend: $(AUTOGEN_ML) $(ML_FILES)
 	ocamldep $(OCAMLINCLUDES) *.mli *.ml */*.mli */*.ml > depend
 clean: 
-	rm -f *.cmo *.cmi *.cmx */*.cmi */*.cmo */*.cmx && \
+	rm -f *.cmo *.cmi *.cmx */*.cmi */*.cmo */*.cmx *.output && \
 	rm -f *.o $(AUTOGEN_ML) $(AUTOGEN_MLI) java2horn depend *~ \
 	rm -r *.output *.smt2 *.dot 
 include depend

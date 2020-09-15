@@ -112,6 +112,7 @@ let print_node (command, extent) =
                       extent.extent_unique_id
                       extent.extent_beg.locus_file_line
                       extent.extent_beg.locus_file_column
+            | _ -> failwith "not a prednaming value"
            in
   res
 
@@ -204,7 +205,7 @@ let rec print_type t =
   | Tr_bool -> "Bool"
 (*  | Tr_value(vt) -> print_type vt*)
   | Tr_array(v) -> Printf.sprintf "(Array Int %s)" (print_type v)
-  | _ -> failwith "Printing a non native type"
+  (*| _ -> failwith "Printing a non native type"*)
 
 (*Does a union of the elements of both list. Allows lists to be used as Sets*)
 let list_union l1 l2 =
@@ -390,7 +391,7 @@ let is_pos v = match v.trans_type with
        start d0p d0v d1p d1v expr Fe_read ]
    Remark : As we do not have the positions of the variables, the rewritting rule consists in changing the distinct number*)
 let command_pos c p expr tab distinct =
-  let odr = order p expr tab distinct in
+  (*let odr = order p expr tab distinct in*)
   create_list (distinct+1) (fun i -> F_node(c, fun v -> 
                                                     (*if (string_equals v.trans_initial_var.s_var_name tab.s_var_name) then begin
                                                       if v.distinct_num < i then (List.nth odr v.distinct_num) (is_pos v)
