@@ -13,7 +13,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. 
 
-cat $1 | sed -e 's;//hint forall.*,;//hint ;' > "$1.tmp1"
-cat "$1.tmp1" | sed -E 'sX//hint(.*);Xassert(\1);X' > "$1.tmp"
-$(dirname $0)/converter "$1.tmp"
-rm -f "$1.tmp" "$1.tmp1"
+file=$(for i in $@; do :; done ; echo "$i")
+args=$(echo $@ | awk '{$NF=""}1')
+cat $file | sed -e 's;//hint forall.*,;//hint ;' | sed -E 'sX//hint(.*);Xassert(\1);X' > "$file.tmp"
+$(dirname $0)/converter $args "$file.tmp" && rm "$file.tmp"
