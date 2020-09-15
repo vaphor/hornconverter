@@ -11,8 +11,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-                                         along with Vaphor.  If not, see <https://www.gnu.org/licenses/>.
-                                                                            *)
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
 
 
 open Simple_java_syntax
@@ -29,7 +28,7 @@ let parse_and_translate config =
   (*Checking Existence of input file*)
   if String.compare config.f_name "" = 0 then failwith ("No input file. Filename read is \""^config.f_name^"\"");
   Localizing.current_file_name := config.f_name;
-
+  
   (*Opening file*)
   let f_desc = try open_in config.f_name 
   with 
@@ -52,7 +51,9 @@ let parse_and_translate config =
       end in
 
   (*Converting from java syntax to simple java syntax*)
-  Simple_java_translate.tr_java_prog java_prog 
+  Simple_java_translate.hints := config.hints;
+  Horn_translate.prednaming := config.prednaming;
+  Simple_java_translate.tr_java_prog java_prog
     
 
 
@@ -100,8 +101,11 @@ let _  =
 
     (*Creating smt2 file and printing if debug*)
     if cf.debug then Printf.printf "%s" str; 
-    let outfile = open_out cf.outputsmt_name in
-    Printf.fprintf outfile "%s" str;
+    if cf.outputsmt_name="stdout" then
+      Printf.printf "%s" str
+    else
+      let outfile = open_out cf.outputsmt_name in
+      Printf.fprintf outfile "%s" str;
     ()
   with
     (*Whenever an exception is thrown, print expression and backtrace (empty if debug = false), and exit with -1 status*)

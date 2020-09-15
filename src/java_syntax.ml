@@ -11,8 +11,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. 
- *)
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
 
 (* java_syntax.ml *)
 (* la syntaxe abstraite de Java 1.5 *)
@@ -71,7 +70,7 @@ type unary_op =
 
 type binary_op =
   (* Logic *)
-  | Or | And | Xor
+  | Or | And | Xor | Imp
   (* Bitwise operations *)
   | Bitwise_and | Bitwise_or | Lshift | Rshift | Urshift
   (* Comparison *)
@@ -195,6 +194,7 @@ and try_statement =
       try_finaly: (statement_e list) option }
 
 and statement =
+  | Hint of expr_e
   | Local_var of variable 
   | Type_decl of type_decl 
   | Labeled of identifier * statement_e

@@ -13,10 +13,7 @@ This file is part of Vaphor
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. 
-
- *)
-
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
 
 (* java_parser.mly *)
 (* syntaxe concrete de Java 1.5 *)
@@ -28,7 +25,7 @@ let lift_array t l = List.fold_left (fun t' () -> Array_type t') t l
 
 %}
 
-%token <unit * Localizing.extent>     ABSTRACT ASSERT BREAK
+%token <unit * Localizing.extent>     ABSTRACT ASSERT BREAK HINT
 %token <unit * Localizing.extent>     CASE CATCH CLASS CONTINUE
 %token <unit * Localizing.extent>     DEFAULT DO ELSE ENUM
 %token <unit * Localizing.extent>     EXTENDS FINAL FINALLY
@@ -46,7 +43,7 @@ let lift_array t l = List.fold_left (fun t' () -> Array_type t') t l
 %token <unit * Localizing.extent>     COLON COMMA SEMICOLON
 %token <unit * Localizing.extent>     COMP NOT
 %token <unit * Localizing.extent>     AND ANDAND DIV DOT EQ MINUS MOD MULT
-%token <unit * Localizing.extent>     OR OROR PLUS QUESTION XOR
+%token <unit * Localizing.extent>     OR OROR PLUS QUESTION XOR IMP
 %token <unit * Localizing.extent>     PLUSPLUS MINUSMINUS
 %token <unit * Localizing.extent>     ELLIPSIS
 
@@ -763,6 +760,7 @@ statement_without_trailing_substatement:
 | throw_statement                         { $1 }
 | try_statement                           { Try (fst $1), snd $1 }
 | assert_statement                        { $1 }
+| hint_statement                        { $1 }
     
 empty_statement:
 | SEMICOLON { Empty_statement, snd $1 }
@@ -973,6 +971,10 @@ assert_statement:
     { Assert ($2, None), fromto $1 $3 }
 | ASSERT expression COLON expression SEMICOLON 
     { Assert ($2, Some $4), fromto $1 $5 }
+
+hint_statement:
+| HINT expression SEMICOLON
+    { Hint($2), fromto $1 $3 }
 
 /* Expressions */
 primary:
@@ -1202,6 +1204,8 @@ exclusive_or_expression:
 | and_expression {$1}
 | exclusive_or_expression XOR and_expression
     { Binary(Xor, $1, $3), fromto $1 $3 }
+| exclusive_or_expression IMP and_expression
+    { Binary(Imp, $1, $3), fromto $1 $3 }
 
 inclusive_or_expression:
 | exclusive_or_expression {$1}
@@ -1448,6 +1452,12 @@ exclusive_or_expression_nn:
       fromto $1 $3 }
 | exclusive_or_expression_nn XOR and_expression
     { Binary(Xor, $1, $3),
+      fromto $1 $3 }
+| name IMP and_expression
+    { Binary(Imp, (Variable(fst $1), snd $1), $3),
+      fromto $1 $3 }
+| exclusive_or_expression_nn IMP and_expression
+    { Binary(Imp, $1, $3),
       fromto $1 $3 }
     
 inclusive_or_expression_nn:

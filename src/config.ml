@@ -25,6 +25,8 @@ type config_t = {
   debug:bool;
   version:string;
   ignore_init:bool;
+  hints:bool;
+  prednaming:int;
 }
 
 exception Version
@@ -35,6 +37,7 @@ exception NotFound of string
 let set_outputdot config (s:string) = config := {!config with outputdot_name=s}
 let set_outputsmt config (s:string) = config := {!config with outputsmt_name=s}
 let set_debug config () = config := {!config with debug=true}
+let set_hints config () = config := {!config with hints=true}
 let set_eval config () = config := {!config with eval=true}
 let set_ignore_init config () = config := {!config with ignore_init=true}
 
@@ -47,15 +50,22 @@ let set_di config nb =
   if (nb < -1)
   then raise (Usage "nb distinguished els should be >= -1 (-1 = normal arrays)")
   else config := {!config with distinct_i=nb}
+
+let set_prednaming config nb =
+  if (nb < 0 || nb >2)
+  then raise (Usage "prednaming is between 0 and 2")
+  else config := {!config with prednaming=nb}
 					   
 let make_default_config () = {
   f_name="";
-  outputsmt_name="foo.smt2";
+  outputsmt_name="stdout";
   outputdot_name="foo.dot";
   distinct_i = 1;
   debug=false;
   eval=false;
   ignore_init = false;
+  hints=false;
+  prednaming=0;
   version="1.0 - Sept 2016";
 }
 			       
@@ -67,9 +77,11 @@ let read_args () =
   let speclist = 
     [
       ("--version",Arg.Unit (fun () -> fprintf std_formatter "java2horn Version %s@." !cf.version ; raise(Version)),": print version and exit");
+      ("-hints", Arg.Unit (set_hints cf) ,": activate hints");
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
       ("-eval", Arg.Unit (set_eval cf) ,": evaluator (WIP)");
       ("-distinct", Arg.Int (set_di cf) ,": #distinguished elements in abstraction");
+      ("-pn", Arg.Int (set_prednaming cf) ,": prednaming choice (changes how predicates are named)");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is foo.smt2");
       ("--ignore-init", Arg.Unit (set_ignore_init cf) ,": ignores variable initializations in declarations");
     ] in

@@ -11,8 +11,8 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. 
- *)
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
+
 
 (* This file defines the Abstract Syntax Tree for "Simplified Java", *)
 (* a minimalist subset of Java.                                      *)
@@ -69,7 +69,7 @@ let uop2string = function
 (* Binary operators. *)
 type s_binary_op =
   | Sb_add | Sb_sub | Sb_mul | Sb_div | Sb_mod
-  | Sb_or | Sb_and | Sb_xor
+  | Sb_or | Sb_and | Sb_xor | Sb_imp
   | Sb_lt | Sb_le | Sb_gt | Sb_ge
   | Sb_eq
       
@@ -82,6 +82,7 @@ let bop2string = function
   | Sb_or -> "||"
   | Sb_and -> "&&"
   | Sb_xor -> "^"
+  | Sb_imp -> "=>"
   | Sb_lt -> "<"
   | Sb_le -> "<="
   | Sb_gt -> ">"

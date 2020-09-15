@@ -11,7 +11,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-                                         along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
 
 (* This file defines an abstract evaluator for Simple_java_Syntax *)
 
@@ -19,6 +19,9 @@ open Simple_java_syntax
 open Simple_java_translate
 open Localizing
 open Config
+
+(*0 for ext last, 1 for ext first, 2 for no ext*)
+let prednaming = ref 0 
 
 exception Excpt_maps
 
@@ -93,11 +96,23 @@ let print_node (command, extent) =
         | Sc_arrayclear _ -> "arrayclear"
         (*| Sc_mapassign _ -> "assign_array"*)
       in
-  let res = Printf.sprintf "%s_%d_%d_%d"
-          prefix
-          extent.extent_beg.locus_file_line
-          extent.extent_beg.locus_file_column
-          extent.extent_unique_id in
+  let res = match !prednaming with
+            | 0 ->  Printf.sprintf "%s_%d_%d_%d"
+                      prefix
+                      extent.extent_beg.locus_file_line
+                      extent.extent_beg.locus_file_column
+                      extent.extent_unique_id
+            | 1 -> Printf.sprintf "%s_%d_%d_%d"
+                      prefix
+                      extent.extent_unique_id
+                      extent.extent_beg.locus_file_line
+                      extent.extent_beg.locus_file_column
+            | 2 -> Printf.sprintf "%s_%d_%d_%d"
+                      prefix
+                      extent.extent_unique_id
+                      extent.extent_beg.locus_file_line
+                      extent.extent_beg.locus_file_column
+           in
   res
 
 (*Print a variable name given the variable and which position index we are considering.
@@ -134,6 +149,7 @@ let rec print_expr expr =
   | Fe_binary(Sb_or, exp1, exp2) -> "(or "^(print_expr exp1)^" "^(print_expr exp2)^")"
   | Fe_binary(Sb_and, exp1, exp2) -> "(and "^(print_expr exp1)^" "^(print_expr exp2)^")"
   | Fe_binary(Sb_xor, exp1, exp2) -> "(xor "^(print_expr exp1)^" "^(print_expr exp2)^")"
+  | Fe_binary(Sb_imp, exp1, exp2) -> "(=> "^(print_expr exp1)^" "^(print_expr exp2)^")"
   | Fe_binary(Sb_lt, Fe_tuple(l1), Fe_tuple(l2)) -> begin match (l1,l2) with
                                                     | [], [] -> ""
                                                     | [a], [b] -> print_expr (Fe_binary(Sb_lt, a, b))
@@ -220,6 +236,7 @@ let rec get_expr_variables e t =
   | Fe_binary(Sb_and, exp1, exp2) 
   | Fe_binary(Sb_or, exp1, exp2) 
   | Fe_binary(Sb_xor, exp1, exp2) -> list_union (get_expr_variables exp1 Tr_int) (get_expr_variables exp2 Tr_bool)
+  | Fe_binary(Sb_imp, exp1, exp2) -> list_union (get_expr_variables exp1 Tr_int) (get_expr_variables exp2 Tr_bool)
   | Fe_read(ty) -> [("?r", ty)]
   | Fe_random -> [("rnd", t)]
   | Fe_tuple(l) ->  begin match t with

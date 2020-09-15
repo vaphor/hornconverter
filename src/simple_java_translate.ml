@@ -1,5 +1,4 @@
-(*
-This file is part of Vaphor
+(*This file is part of Vaphor
 
     Vaphor is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -12,13 +11,14 @@ This file is part of Vaphor
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-                                         along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
-
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
 
 (* Translation from Java into simple-Java *)
 open Java_syntax
 open Simple_java_syntax
 open Localizing
+
+let hints = ref false
 
 (* Many features of Java are not supported *)
 (* When an unsupported feature is encoutered an exception is raised *)
@@ -54,6 +54,13 @@ let rec tr_var java_name =
   match java_name with
   | Simple_name(n, ext) -> retrieve_var n
   | Qualified_name(name, qualifier) -> tr_var name
+  
+let rec tr_unsafe_var java_name = 
+  match java_name with
+  | Simple_name(n, ext) -> { s_var_name= n;     
+           s_var_extent= ext;     
+           s_var_type=    St_int;}
+  | Qualified_name(name, qualifier) -> tr_unsafe_var name
 
 (*Converts a java type to a simple java type. Arrays are converted to maps and arrays of arrays are converted to maps with a tuple index*)
 let rec tr_type = function
@@ -81,6 +88,7 @@ let tr_binary_op = function
   | Or -> Sb_or
   | And -> Sb_and
   | Xor -> Sb_xor
+  | Imp -> Sb_imp
   | Bitwise_and | Bitwise_or | Lshift | Rshift | Urshift ->
       non_supported "bitwise operator"
   | Equal -> Sb_eq
@@ -113,8 +121,11 @@ let rec tr_expression (e: expression) =
       Se_binary (tr_binary_op b, tr_expr_e e0, tr_expr_e e1)
   | Unary (u, e0) ->
       Se_unary (tr_unary_op u, tr_expr_e e0)
-  | Variable(name) ->
+  | Variable(name) -> (try
      Se_var(tr_var name)
+     with _ -> Se_var(tr_unsafe_var name))
+       
+     
   | New_array a -> non_supported "new array inside expression"
   | Integer_constant i -> Se_const (Sc_int i)
   | Float_constant _ -> non_supported "floating-point"
@@ -195,7 +206,7 @@ let tr_init (init : var_init) (var : s_var) : s_block =
   match (init, var.s_var_type) with
   | (Expr_init(e), St_array(t)) -> failwith "Can not assign a value to a vector/map in initialization"
   | (Expr_init(e, extent), _ ) -> [Sc_assign((Se_var(var), extent), tr_expr_e (e, extent)), extent]
-  | (Tuple_init(tuple), St_array(valuet)) -> Printf.printf "array inits ignored..."; []
+  | (Tuple_init(tuple), St_array(valuet)) -> (*Printf.eprintf "array inits ignored...";*) []
     (*let rec init_expr e v =
       match e with
       | Tuple_init(l) -> List.mapi (fun i e -> Sc_arrayassign(Se_var(var), Se_const(Sc_int(Int64.of_int i)), e)
@@ -216,6 +227,7 @@ let assigns = get_array_inits t init var.s_var_extent in
 (*Converts statement*)
 let rec tr_statement_e ((s, ext): statement_e): s_block =
   match s with
+  | Hint(e) -> if !hints then [Sc_assert (tr_expr_e e), ext] else []
   | Local_var vd ->
       non_supported "local variable declaration"
   | If_then (e, s) ->

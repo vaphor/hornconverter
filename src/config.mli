@@ -22,6 +22,8 @@ type config_t = {
   debug:bool;
   version:string;
   ignore_init:bool;
+  hints:bool;
+  prednaming:int;
 }
 
 val make_default_config : unit -> config_t

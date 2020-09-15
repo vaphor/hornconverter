@@ -11,8 +11,9 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. 
- *){
+    along with Vaphor.  If not, see <https://www.gnu.org/licenses/>. *)
+
+{
 (* java_lexer.mll *)
 (* Analyseur lexical sans verification des conditions de contexte pour le 
 langage Java *)
@@ -26,7 +27,7 @@ exception Eof
 
 
 
-   (* numerical ct *)
+(* numerical ct *)
 let octal_digit = ['0'-'7']
 let octal_constant = '0' octal_digit*
 
@@ -138,7 +139,9 @@ let newline = "\n" | "\r" | "\r\n"
 rule token = parse
   newline { next_line lexbuf; token lexbuf }
 | [' ' '\t' ] {token lexbuf}
-| "//" [^'\n' '\r']* ['\n' '\r'] {next_line lexbuf; token lexbuf}
+| "//hint forall" [^ ',']* "," {HINT ((), extent lexbuf) }
+| "//hint " {HINT ((), extent lexbuf) }
+| "//" {line_comment lexbuf; token lexbuf}
 | "/*" {comment lexbuf; token lexbuf}
 | integer_constant {let s = Lexing.lexeme lexbuf and e = extent lexbuf in
                     INTEGER_LITERAL(s,e)}
@@ -191,6 +194,7 @@ rule token = parse
 | '?'              { QUESTION ((), extent lexbuf) }
 | '&'              { AND ((), extent lexbuf) }
 | '^'              { XOR ((), extent lexbuf) }
+| "->"              { IMP ((), extent lexbuf) }
 | '|'              { OR ((), extent lexbuf) }
 | '+'              { PLUS ((), extent lexbuf) }
 | '-'              { MINUS ((), extent lexbuf) }
@@ -256,7 +260,11 @@ rule token = parse
 and comment = parse
   "*/" { () }
 | [^ '\n'] { comment lexbuf }
-| newline { next_line lexbuf; comment lexbuf }
+| newline {next_line lexbuf; comment lexbuf }
+
+and line_comment = parse 
+| [^ '\n'] { line_comment lexbuf }
+| newline { next_line lexbuf; () }
 
 and 
 ruleTail acc = parse

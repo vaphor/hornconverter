@@ -26,7 +26,7 @@ type extent =
     { extent_beg:       locus;
       extent_end:       locus;
       extent_unique_id: int }
-
+      
 (* Management of unique IDs *)
 let cur_unique_id = ref 0
 let get_unique_id () =
