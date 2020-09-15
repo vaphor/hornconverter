@@ -8,9 +8,9 @@ Input: a source code conform to "mini-java" syntax
 Output: a smt2 file conform to the smtlib syntax 
 the output still contains usage of the array theory.
 
-Usage : ./java2horn [options] file
+Usage : ./converter [options] file
 
-Example : ./java2horn demo.java -o demo.smt2
+Example : ./converter demo.java -o demo.smt2
 
 Use your favorite SMT solver to solve the smt2 file
-or use vaphor to abstract it into a smt2 without arrays.
+or use another vaphor tool to abstract it into a smt2 without arrays.
