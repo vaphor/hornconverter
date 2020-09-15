@@ -15,5 +15,5 @@
 
 cat $1 | sed -e 's;//hint forall.*,;//hint ;' > "$1.tmp1"
 cat "$1.tmp1" | sed -E 'sX//hint(.*);Xassert(\1);X' > "$1.tmp"
-$(dirname $0)/java2horn "$1.tmp"
+$(dirname $0)/converter "$1.tmp"
 rm -f "$1.tmp" "$1.tmp1"
