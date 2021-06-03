@@ -64,6 +64,7 @@ type abstract_expr =
 | Fe_remove of abstract_expr * abstract_expr
 | Fe_size of abstract_expr
 | Fe_emptyarray of abstract_expr
+| Fe_forall of abstract_var * abstract_expr
 
 (*A smt2 formula*)
 type formula = 
@@ -90,7 +91,8 @@ let print_node (command, extent) =
         | Sc_while _ -> "while"
         | Sc_proc_call _ -> "call"
         | Sc_assert _ -> "assert"
-	| Sc_assume _ -> "assume"
+        | Sc_assume _ -> "assume"
+        | Sc_invariant _ -> "invariant"
         | Sc_arrayinsert _ -> "arrayinsert"
         | Sc_arrayremove _ -> "arrayremove"
         | Sc_arrayclear _ -> "arrayclear"
@@ -120,6 +122,16 @@ let print_node (command, extent) =
   Only for position variables*)
 (*let print_pos_v v i = Printf.sprintf "%sd%ip%i" v.trans_initial_var.s_var_name v.distinct_num i*)
 
+
+(*Prints type for z3*)
+let rec print_type t =
+  match t with
+  | Tr_int -> "Int"
+  | Tr_bool -> "Bool"
+(*  | Tr_value(vt) -> print_type vt*)
+  | Tr_array(v) -> Printf.sprintf "(Array Int %s)" (print_type v)
+  (*| _ -> failwith "Printing a non native type"*)
+
 (*Prints expression*)
 let rec print_expr expr =
   match expr with
@@ -130,6 +142,7 @@ let rec print_expr expr =
                       | Tr_position(positions) -> (fst (List.fold_left (fun (b,i) p -> 
                                              ((Printf.sprintf "%s%s " b  (print_pos_v v i)), i+1)) ("", 0) positions))*)
                       | Tr_array(t) -> v.trans_initial_var.s_var_name^ " "  end
+  | Fe_forall(v, e) ->  Printf.sprintf "(forall ((%s %s)) %s)" v.trans_initial_var.s_var_name (print_type v.trans_type) (print_expr e)
   | Fe_string_var(s) -> s
   | Fe_bool(b) -> Printf.sprintf "%B" b
   | Fe_int(i) -> Printf.sprintf "%Ld" i
@@ -193,19 +206,13 @@ let print_command command =
     | Sc_proc_call(call, arg)-> Printf.sprintf ("(call)    %s") "calltodo"
     | Sc_assert(e) -> Printf.sprintf ("(assert)  %s") (sexpr2string (fst e))
     | Sc_assume(e) -> Printf.sprintf ("(assume)  %s")  (sexpr2string (fst e))
+    | Sc_invariant(e) -> Printf.sprintf ("(invariant)  %s")  (sexpr2string (fst e))
     | Sc_arrayinsert(tab, index, value) -> Printf.sprintf ("(insert)  insert(%s, %s, %s)") (sexpr2string (fst tab)) (sexpr2string (fst index)) (sexpr2string (fst value))
     | Sc_arrayremove(tab, index) -> Printf.sprintf ("(remove)  remove(%s, %s)") (sexpr2string (fst tab)) (sexpr2string (fst index))
     | Sc_arrayclear(tab) -> Printf.sprintf ("(clear)   clear(%s)") (sexpr2string (fst tab))
 
 
-(*Prints type for z3*)
-let rec print_type t =
-  match t with
-  | Tr_int -> "Int"
-  | Tr_bool -> "Bool"
-(*  | Tr_value(vt) -> print_type vt*)
-  | Tr_array(v) -> Printf.sprintf "(Array Int %s)" (print_type v)
-  (*| _ -> failwith "Printing a non native type"*)
+
 
 (*Does a union of the elements of both list. Allows lists to be used as Sets*)
 let list_union l1 l2 =
@@ -220,6 +227,7 @@ let rec get_expr_variables e t =
                       (*| Tr_value(ty) -> [(Printf.sprintf "%sd%iv"  v.trans_initial_var.s_var_name v.distinct_num, ty)]
                       | Tr_position(positions) -> List.mapi (fun i p -> (print_pos_v v i, p)) positions*)
                       | Tr_array(t)-> [(v.trans_initial_var.s_var_name, Tr_array(t))] end
+  | Fe_forall(v, e) -> List.filter (fun (n, t) -> not (string_equals v.trans_initial_var.s_var_name n)) (get_expr_variables e (Tr_bool))
   | Fe_string_var(s) -> [(s, t)]
   | Fe_bool(b) -> []
   | Fe_int(i) -> []
@@ -336,6 +344,7 @@ let rec tr_expr (expr,ext) =
   | Se_binary(op, e1, e2) -> Fe_binary(op, tr_expr e1, tr_expr e2)
   | Se_arrayaccess(tab, index) -> Fe_select(tr_expr tab, tr_expr index)
   | Se_arraysize(tab) -> Fe_size(tr_expr tab)
+  | Se_forall(var, e) -> Fe_forall(get_abstract_variable var (-1) true, tr_expr e)
   | Se_random_bounded(low, high) -> failwith "should not encounter random here"
   | Se_random -> failwith "should not encounter random here"
   | H_store(tab, index, value) -> Fe_store(tr_expr tab, tr_expr index, tr_expr value)
@@ -484,6 +493,7 @@ let rec create_formulas block abstract_variables next_node distinct =
                                           F_node(next_command, fun v -> Fe_variable(v)))]
        | Sc_proc_call(f, arg) -> failwith "Not Implemented yet"
        | Sc_assert(expr) -> [F_implies(F_node(c, fun v -> Fe_variable(v)), F_bformula(tr_expr expr)); F_implies(F_node(c, fun v -> Fe_variable(v)), F_node(next_command, fun v -> Fe_variable(v)))]
+       | Sc_invariant(expr) -> [F_implies(F_node(c, fun v -> Fe_variable(v)), F_bformula(tr_expr expr)); F_implies(F_bformula(tr_expr expr), F_node(next_command, fun v -> Fe_variable(v)))]
        | Sc_assume(expr) -> [F_implies(F_and([F_node(c, fun v -> Fe_variable(v)); F_bformula(tr_expr expr)]), F_node(next_command, fun v -> Fe_variable(v)))]
        | Sc_arrayassign(tab, index, value) -> 
          begin match tr_expr tab with

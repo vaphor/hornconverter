@@ -125,8 +125,6 @@ let rec tr_expression (e: expression) =
   | Variable(name) -> (try
      Se_var(tr_var name)
      with _ -> Se_var(tr_unsafe_var name))
-       
-     
   | New_array a -> non_supported "new array inside expression"
   | Integer_constant i -> Se_const (Sc_int i)
   | Float_constant _ -> non_supported "floating-point"
@@ -146,6 +144,13 @@ let rec tr_expression (e: expression) =
                 | [] -> Se_random
                 | _ -> failwith "Support.random: arguments"
                end
+          | "forall" -> 
+            (
+              match args with
+              | [vname; prop] -> let fvar,ext = tr_expr_e vname in
+                                 (match fvar with | Se_var(x) -> Se_forall(x, tr_expr_e prop) | _ -> failwith "forall fist param must be a variable name")
+              | _ -> failwith "forall needs 2 arguments"
+            )
           | _ -> non_supported "method call 0"
           end
         | Named_method (Qualified_name (Simple_name ("Array", _), f)) ->
@@ -242,13 +247,22 @@ let rec tr_statement_e ((s, ext): statement_e): s_block =
       begin
         match name with
         | Named_method (Qualified_name (Simple_name ("Support", _), f)) ->
-            if f = "assume" then
+          (
+            match f with
+            | "assume" ->
               begin
-		match args with
-		| [e] -> [ Sc_assume(tr_expr_e e), ext]
-		| _ -> failwith "Support.assume wrong # of arguments" 
-	      end
-            else non_supported "method call 3"
+              match args with
+                | [e] -> [ Sc_assume(tr_expr_e e), ext]
+                | _ -> failwith "Support.assume wrong # of arguments" 
+              end
+            | "invariant" ->
+              begin
+              match args with
+                | [e] -> [Sc_invariant(tr_expr_e e), ext]
+                | _ -> failwith "Support.invariant wrong # of arguments" 
+              end
+            | _ -> non_supported "method call 3"
+          )
         | Named_method (Qualified_name (Simple_name ("Array", _), f)) -> 
             begin match (f, args) with
             | "insert", tab::index::value::[] -> [Sc_arrayinsert(tr_expr_e tab, tr_expr_e index, tr_expr_e value), ext]

@@ -112,6 +112,7 @@ and s_expr =
   | Se_arraysize of s_expr_e (*tab.size()*)
   | Se_random_bounded of s_expr_e * s_expr_e
   | Se_random
+  | Se_forall of s_var * s_expr_e
   | H_store of s_expr_e * s_expr_e * s_expr_e
 					    
 (* Expressions annotated with a position in the source file *)
@@ -127,6 +128,7 @@ and s_command =
   | Sc_proc_call of s_proc_call * s_expr_e (*proc(expression)*)
   | Sc_assert of s_expr_e (* assert(s_expr_e) *)
   | Sc_assume of s_expr_e (* assume(s_expr_e) *)
+  | Sc_invariant of s_expr_e 
   | Sc_arrayinsert of s_expr_e * s_expr_e * s_expr_e (*tab.insert(i, e)*)
   | Sc_arrayremove of s_expr_e * s_expr_e (*tab.remove(i, e)*)
   | Sc_arrayclear of s_expr_e
@@ -160,6 +162,7 @@ let rec sexpr2string se = match se with
   | Se_arrayaccess(tab,key) -> Printf.sprintf "%s[%s]" (sexpr2string (fst tab)) (sexpr2string (fst key))
   | Se_arraysize(tab) -> Printf.sprintf "%s.size()" (sexpr2string (fst tab))
   | Se_random -> Printf.sprintf "Support.random()"
+  | Se_forall(svar, e) -> Printf.sprintf "Support.forall(%s, %s)" svar.s_var_name (sexpr2string (fst e))
   | Se_random_bounded(low, high) -> Printf.sprintf "Support.random(%s, %s)" (sexpr2string (fst low)) (sexpr2string (fst high))
   | _ -> failwith "unhandled operation"
 
@@ -199,9 +202,11 @@ let rec pp_block funb (printpos:bool) indent =  (*iter on block list = list of s
     | Sc_proc_call(call, arg)-> str^Printf.sprintf ("%s(call)    %s") (line_return indent) "calltodo"
     | Sc_assert(e) -> str^Printf.sprintf ("%s(assert)  %s") (line_return indent) (sexpr2string (fst e))
     | Sc_assume(e) -> str^Printf.sprintf ("%s(assume)  %s")  (line_return indent) (sexpr2string (fst e))
+    | Sc_invariant(e) -> str^Printf.sprintf ("%s(invariant)  %s")  (line_return indent) (sexpr2string (fst e))
     | Sc_arrayinsert(tab, index, value) -> str^Printf.sprintf ("%s(insert)  %s.insert(%s, %s)")  (line_return indent) (sexpr2string (fst tab)) (sexpr2string (fst index)) (sexpr2string (fst value))
     | Sc_arrayremove(tab, index) -> str^Printf.sprintf ("%s(remove)  %s.remove(%s)")  (line_return indent) (sexpr2string (fst tab)) (sexpr2string (fst index))
     | Sc_arrayclear(tab) -> str^Printf.sprintf ("%s(clear)   %s.clear()")  (line_return indent) (sexpr2string (fst tab))
+    
   
 
 (*Print a class : the variables and functions*)

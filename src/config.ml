@@ -57,7 +57,7 @@ let set_prednaming config nb =
   else config := {!config with prednaming=nb}
 					   
 let make_default_config () = {
-  f_name="";
+  f_name="stdin";
   outputsmt_name="stdout";
   outputdot_name="foo.dot";
   distinct_i = 1;
@@ -76,11 +76,11 @@ let read_args () =
   let cf = ref (make_default_config()) in
   let speclist = 
     [
-      ("--version",Arg.Unit (fun () -> fprintf std_formatter "java2horn Version %s@." !cf.version ; raise(Version)),": print version and exit");
+(*       ("--version",Arg.Unit (fun () -> fprintf std_formatter "java2horn Version %s@." !cf.version ; raise(Version)),": print version and exit"); *)
       ("-hints", Arg.Unit (set_hints cf) ,": activate hints");
       ("-debug", Arg.Unit (set_debug cf) ,": all debug info");
       ("-eval", Arg.Unit (set_eval cf) ,": evaluator (WIP)");
-      ("-distinct", Arg.Int (set_di cf) ,": #distinguished elements in abstraction");
+(*       ("-distinct", Arg.Int (set_di cf) ,": #distinguished elements in abstraction"); *)
       ("-pn", Arg.Int (set_prednaming cf) ,": prednaming choice (changes how predicates are named)");
       ("-o", Arg.String (set_outputsmt cf) ,": outputfile, default is foo.smt2");
       ("--ignore-init", Arg.Unit (set_ignore_init cf) ,": ignores variable initializations in declarations");

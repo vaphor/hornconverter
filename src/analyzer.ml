@@ -28,14 +28,21 @@ let parse_and_translate config =
   (*Checking Existence of input file*)
   if String.compare config.f_name "" = 0 then failwith ("No input file. Filename read is \""^config.f_name^"\"");
   Localizing.current_file_name := config.f_name;
-  
   (*Opening file*)
-  let f_desc = try open_in config.f_name 
-  with 
-    | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^config.f_name^"\"") in
+  
 
   (* Lexing *)
-  let lexbuf = Lexing.from_channel f_desc in
+  let lexbuf = 
+    if String.compare config.f_name "stdin" = 0 then
+       Lexing.from_channel stdin
+    else
+    (
+      let f_desc = 
+        try open_in config.f_name 
+        with | Sys_error(e) -> failwith ("Impossible to open file. Filename read is \""^config.f_name^"\"") 
+      in Lexing.from_channel f_desc
+    )
+  in
   let java_prog = 
     (*Parsing*)
     try Java_parser.program Java_lexer.token lexbuf
